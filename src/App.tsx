@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { TimeEntriesProvider } from './hooks/useTimeEntries';
 import { SettingsProvider } from './hooks/useSettings';
 import { ThemeProvider } from './hooks/useTheme';
@@ -12,7 +12,7 @@ export function App() {
     <ThemeProvider>
       <SettingsProvider>
         <TimeEntriesProvider>
-          <BrowserRouter>
+          <HashRouter>
             <div className="app-layout">
               <Header />
               <main className="app-main">
@@ -23,7 +23,7 @@ export function App() {
                 </Routes>
               </main>
             </div>
-          </BrowserRouter>
+          </HashRouter>
         </TimeEntriesProvider>
       </SettingsProvider>
     </ThemeProvider>
