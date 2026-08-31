@@ -10,6 +10,7 @@ import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { useSettings } from '../hooks/useSettings';
 import { calculateEarnings } from '../utils/calculations';
 import { formatCurrency } from '../utils/currency';
+import { downloadMonthlySummaryImage } from '../utils/imageGenerator';
 
 export function History() {
   const { entries, deleteEntry } = useTimeEntries();
@@ -71,17 +72,42 @@ export function History() {
     }
   }
 
+  const monthName = displayDate.toLocaleDateString('pt-BR', { month: 'long' });
+
+  function handleExportImage() {
+    downloadMonthlySummaryImage({
+      monthName,
+      year: monthYear.year,
+      totalWorkedFormatted: formatDuration(monthlyMinutes),
+      hourlyRateFormatted: formatCurrency(settings.hourlyRate),
+      totalEarningsFormatted: formatCurrency(monthlyEarnings),
+      totalEntriesCount: monthEntries.length,
+      workedDaysCount: groupedByDay.length,
+      weeklyGoalFormatted: formatDuration(settings.weeklyGoalMinutes),
+    });
+  }
+
   return (
     <div>
       <div className="page-header">
         <h1 className="page-title">Histórico</h1>
-        <div className="month-nav">
-          <button className="week-nav-btn" onClick={handlePrevMonth} aria-label="Mês anterior">
-            ‹
-          </button>
-          <span className="month-nav-label">{formatMonthYear(displayDate)}</span>
-          <button className="week-nav-btn" onClick={handleNextMonth} aria-label="Próximo mês">
-            ›
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+          <div className="month-nav">
+            <button className="week-nav-btn" onClick={handlePrevMonth} aria-label="Mês anterior">
+              ‹
+            </button>
+            <span className="month-nav-label">{formatMonthYear(displayDate)}</span>
+            <button className="week-nav-btn" onClick={handleNextMonth} aria-label="Próximo mês">
+              ›
+            </button>
+          </div>
+          <button
+            className="btn btn-secondary"
+            onClick={handleExportImage}
+            style={{ fontSize: '0.8125rem', padding: 'var(--space-2) var(--space-3)' }}
+            title="Baixar imagem com resumo mensal"
+          >
+            📷 Exportar Imagem
           </button>
         </div>
       </div>
