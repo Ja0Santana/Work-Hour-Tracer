@@ -13,6 +13,51 @@ interface TimelineProps {
 const TIMELINE_START_HOUR = 0;
 const TIMELINE_END_HOUR = 24;
 const TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR;
+const LANE_HEIGHT_PX = 36;
+const LANE_GAP_PX = 4;
+
+interface EntryWithLane {
+  entry: TimeEntry;
+  lane: number;
+  startMinutes: number;
+  endMinutes: number;
+}
+
+function assignLanes(entries: TimeEntry[]): EntryWithLane[] {
+  const mapped = entries.map((entry) => {
+    const startMinutes = timeStringToMinutes(entry.startTime);
+    let endMinutes = timeStringToMinutes(entry.endTime);
+    if (endMinutes <= startMinutes) {
+      endMinutes += 24 * 60;
+    }
+    return { entry, startMinutes, endMinutes, lane: 0 };
+  });
+
+  mapped.sort((a, b) => a.startMinutes - b.startMinutes || a.endMinutes - b.endMinutes);
+
+  const laneEnds: number[] = [];
+
+  for (const item of mapped) {
+    let assignedLane = -1;
+
+    for (let i = 0; i < laneEnds.length; i++) {
+      if (laneEnds[i] <= item.startMinutes) {
+        assignedLane = i;
+        break;
+      }
+    }
+
+    if (assignedLane === -1) {
+      assignedLane = laneEnds.length;
+      laneEnds.push(0);
+    }
+
+    item.lane = assignedLane;
+    laneEnds[assignedLane] = item.endMinutes;
+  }
+
+  return mapped;
+}
 
 export function Timeline({ selectedDate, onSelectEntry }: TimelineProps) {
   const { entries } = useTimeEntries();
@@ -30,22 +75,27 @@ export function Timeline({ selectedDate, onSelectEntry }: TimelineProps) {
     return h;
   }, []);
 
-  function getBlockStyle(entry: TimeEntry): React.CSSProperties {
-    const startMinutes = timeStringToMinutes(entry.startTime);
-    let endMinutes = timeStringToMinutes(entry.endTime);
+  const entriesWithLanes = useMemo(() => assignLanes(dayEntries), [dayEntries]);
+  const laneCount = useMemo(
+    () => (entriesWithLanes.length > 0 ? Math.max(...entriesWithLanes.map((e) => e.lane)) + 1 : 1),
+    [entriesWithLanes],
+  );
 
-    if (endMinutes <= startMinutes) {
-      endMinutes += 24 * 60;
-    }
+  const blocksHeight = laneCount * LANE_HEIGHT_PX + (laneCount - 1) * LANE_GAP_PX;
+  const totalTimelineHeight = 20 + 8 + blocksHeight + 8;
 
+  function getBlockStyle(item: EntryWithLane): React.CSSProperties {
     const totalMinutes = TOTAL_HOURS * 60;
-    const startPercent = ((startMinutes - TIMELINE_START_HOUR * 60) / totalMinutes) * 100;
-    const widthPercent = ((endMinutes - startMinutes) / totalMinutes) * 100;
+    const startPercent = ((item.startMinutes - TIMELINE_START_HOUR * 60) / totalMinutes) * 100;
+    const widthPercent = ((item.endMinutes - item.startMinutes) / totalMinutes) * 100;
+    const topPx = item.lane * (LANE_HEIGHT_PX + LANE_GAP_PX);
 
     return {
       left: `${Math.max(0, startPercent)}%`,
-      width: `${Math.min(widthPercent, 100 - startPercent)}%`,
-      background: CATEGORY_COLORS[entry.category],
+      width: `${Math.min(widthPercent, 100 - Math.max(0, startPercent))}%`,
+      top: `${topPx}px`,
+      height: `${LANE_HEIGHT_PX}px`,
+      background: CATEGORY_COLORS[item.entry.category],
     };
   }
 
@@ -54,7 +104,7 @@ export function Timeline({ selectedDate, onSelectEntry }: TimelineProps) {
       <div className="card">
         <span className="card-title">Timeline</span>
         <div className="timeline-container" style={{ marginTop: 'var(--space-3)' }}>
-          <div className="timeline">
+          <div className="timeline" style={{ height: `${totalTimelineHeight}px` }}>
             <div className="timeline-hours">
               {hours.map((h) => (
                 <span key={h} className="timeline-hour-label">
@@ -85,7 +135,7 @@ export function Timeline({ selectedDate, onSelectEntry }: TimelineProps) {
     <div className="card">
       <span className="card-title">Timeline</span>
       <div className="timeline-container" style={{ marginTop: 'var(--space-3)' }}>
-        <div className="timeline">
+        <div className="timeline" style={{ height: `${totalTimelineHeight}px` }}>
           <div className="timeline-hours">
             {hours.map((h) => (
               <span key={h} className="timeline-hour-label">
@@ -98,25 +148,25 @@ export function Timeline({ selectedDate, onSelectEntry }: TimelineProps) {
               <div key={h} className="timeline-grid-line" />
             ))}
           </div>
-          <div className="timeline-blocks">
-            {dayEntries.map((entry) => (
+          <div className="timeline-blocks" style={{ height: `${blocksHeight}px` }}>
+            {entriesWithLanes.map((item) => (
               <div
-                key={entry.id}
+                key={item.entry.id}
                 className="timeline-block"
-                style={getBlockStyle(entry)}
-                onClick={() => onSelectEntry(entry)}
-                title={`${entry.startTime} – ${entry.endTime}: ${entry.description} (${CATEGORY_LABELS[entry.category]})`}
+                style={getBlockStyle(item)}
+                onClick={() => onSelectEntry(item.entry)}
+                title={`${item.entry.startTime} – ${item.entry.endTime}: ${item.entry.description} (${CATEGORY_LABELS[item.entry.category]})`}
                 role="button"
                 tabIndex={0}
-                aria-label={`${entry.description} de ${entry.startTime} até ${entry.endTime}`}
+                aria-label={`${item.entry.description} de ${item.entry.startTime} até ${item.entry.endTime}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    onSelectEntry(entry);
+                    onSelectEntry(item.entry);
                   }
                 }}
               >
-                {entry.description}
+                {item.entry.description}
               </div>
             ))}
           </div>

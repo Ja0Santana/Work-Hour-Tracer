@@ -739,7 +739,6 @@ textarea:focus-visible {
 .timeline {
   position: relative;
   min-width: 700px;
-  height: 100px;
 }
 
 .timeline-hours {
@@ -783,13 +782,10 @@ textarea:focus-visible {
   top: 28px;
   left: 0;
   right: 0;
-  bottom: 8px;
 }
 
 .timeline-block {
   position: absolute;
-  top: 0;
-  bottom: 0;
   border-radius: var(--radius-sm);
   padding: var(--space-1) var(--space-2);
   font-size: 0.625rem;
