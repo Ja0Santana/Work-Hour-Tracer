@@ -54,6 +54,7 @@ export interface TimeEntry {
   endTime: string;
   description: string;
   notes?: string;
+  hourlyRateAtCreation: number;
   createdAt: string;
   updatedAt?: string;
 }

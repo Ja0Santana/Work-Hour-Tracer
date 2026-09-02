@@ -8,9 +8,10 @@ import { TimeEntryCard } from '../components/TimeEntry/TimeEntryCard';
 import { TimeEntryForm } from '../components/TimeEntry/TimeEntryForm';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { useSettings } from '../hooks/useSettings';
-import { calculateEarnings } from '../utils/calculations';
+import { calculateEntriesEarnings } from '../utils/calculations';
 import { formatCurrency } from '../utils/currency';
 import { downloadMonthlySummaryImage } from '../utils/imageGenerator';
+import { exportMonthToExcel } from '../utils/excelExporter';
 
 export function History() {
   const { entries, deleteEntry } = useTimeEntries();
@@ -31,7 +32,7 @@ export function History() {
   );
 
   const monthlyMinutes = useMemo(() => calculateTotalMinutes(monthEntries), [monthEntries]);
-  const monthlyEarnings = calculateEarnings(monthlyMinutes, settings.hourlyRate);
+  const monthlyEarnings = calculateEntriesEarnings(monthEntries);
 
   const groupedByDay = useMemo(() => {
     const groups = new Map<string, TimeEntry[]>();
@@ -87,6 +88,15 @@ export function History() {
     });
   }
 
+  function handleExportExcel() {
+    exportMonthToExcel({
+      entries: monthEntries,
+      year: monthYear.year,
+      month: monthYear.month,
+      monthName,
+    });
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -108,6 +118,15 @@ export function History() {
             title="Baixar imagem com resumo mensal"
           >
             📷 Exportar Imagem
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={handleExportExcel}
+            style={{ fontSize: '0.8125rem', padding: 'var(--space-2) var(--space-3)' }}
+            title="Baixar planilha Excel com dados do mês"
+            disabled={monthEntries.length === 0}
+          >
+            📊 Exportar Excel
           </button>
         </div>
       </div>

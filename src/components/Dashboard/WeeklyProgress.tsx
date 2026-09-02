@@ -6,7 +6,8 @@ import {
   calculateRemainingMinutes,
   calculateSurplusMinutes,
   calculateProgress,
-  calculateEarnings,
+  calculateEntriesEarnings,
+  getEntriesForWeek,
 } from '../../utils/calculations';
 import { formatDuration } from '../../utils/time';
 import { formatCurrency } from '../../utils/currency';
@@ -19,6 +20,11 @@ export function WeeklyProgress({ weekStart }: WeeklyProgressProps) {
   const { entries } = useTimeEntries();
   const { settings } = useSettings();
 
+  const weekEntries = useMemo(
+    () => getEntriesForWeek(entries, weekStart),
+    [entries, weekStart],
+  );
+
   const workedMinutes = useMemo(
     () => calculateWeeklyMinutes(entries, weekStart),
     [entries, weekStart],
@@ -27,7 +33,7 @@ export function WeeklyProgress({ weekStart }: WeeklyProgressProps) {
   const remainingMinutes = calculateRemainingMinutes(workedMinutes, settings.weeklyGoalMinutes);
   const surplusMinutes = calculateSurplusMinutes(workedMinutes, settings.weeklyGoalMinutes);
   const progress = calculateProgress(workedMinutes, settings.weeklyGoalMinutes);
-  const earnings = calculateEarnings(workedMinutes, settings.hourlyRate);
+  const earnings = calculateEntriesEarnings(weekEntries);
   const isGoalReached = workedMinutes >= settings.weeklyGoalMinutes;
   const progressCapped = Math.min(progress, 100);
 

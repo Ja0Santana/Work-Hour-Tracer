@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from 'react';
 import { useTimeEntries } from '../../hooks/useTimeEntries';
 import { useSettings } from '../../hooks/useSettings';
-import { calculateMonthlyMinutes, calculateEarnings, getEntriesForMonth } from '../../utils/calculations';
+import { calculateMonthlyMinutes, calculateEntriesEarnings, getEntriesForMonth } from '../../utils/calculations';
 import { formatDuration } from '../../utils/time';
 import { formatCurrency } from '../../utils/currency';
 import { formatMonthYear } from '../../utils/date';
@@ -28,7 +28,7 @@ export function MonthlySummary({ year, month, onPrevMonth, onNextMonth }: Monthl
     [entries, year, month],
   );
 
-  const monthlyEarnings = calculateEarnings(monthlyMinutes, settings.hourlyRate);
+  const monthlyEarnings = calculateEntriesEarnings(monthEntries);
   const displayDate = new Date(year, month);
   const monthName = displayDate.toLocaleDateString('pt-BR', { month: 'long' });
 

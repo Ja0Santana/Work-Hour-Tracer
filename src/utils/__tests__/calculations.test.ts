@@ -21,6 +21,7 @@ function makeEntry(overrides: Partial<TimeEntry> = {}): TimeEntry {
     startTime: '09:00',
     endTime: '17:00',
     description: 'Test activity',
+    hourlyRateAtCreation: 35,
     createdAt: '2026-08-31T00:00:00Z',
     ...overrides,
   };

@@ -4,6 +4,7 @@ import { ACTIVITY_CATEGORIES, CATEGORY_LABELS } from '../../types/timeEntry';
 import { calculateDuration, formatDuration, isValidTimeString } from '../../utils/time';
 import { getTodayString, isValidDateString } from '../../utils/date';
 import { useTimeEntries } from '../../hooks/useTimeEntries';
+import { useSettings } from '../../hooks/useSettings';
 import { detectOverlaps } from '../../utils/calculations';
 
 interface TimeEntryFormProps {
@@ -41,6 +42,7 @@ interface FormErrors {
 
 export function TimeEntryForm({ isOpen, editingEntry, onClose }: TimeEntryFormProps) {
   const { entries, addEntry, updateEntry } = useTimeEntries();
+  const { settings } = useSettings();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -88,6 +90,7 @@ export function TimeEntryForm({ isOpen, editingEntry, onClose }: TimeEntryFormPr
       startTime: form.startTime,
       endTime: form.endTime,
       description: form.description,
+      hourlyRateAtCreation: editingEntry?.hourlyRateAtCreation ?? settings.hourlyRate,
       createdAt: new Date().toISOString(),
     };
 
@@ -143,7 +146,7 @@ export function TimeEntryForm({ isOpen, editingEntry, onClose }: TimeEntryFormPr
     if (editingEntry) {
       updateEntry(editingEntry.id, entryData);
     } else {
-      addEntry(entryData);
+      addEntry({ ...entryData, hourlyRateAtCreation: settings.hourlyRate });
     }
 
     onClose();

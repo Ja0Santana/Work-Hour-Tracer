@@ -27,7 +27,13 @@ function safeSetItem<T>(key: string, value: T): void {
 }
 
 export function getEntries(): TimeEntry[] {
-  return safeGetItem<TimeEntry[]>(STORAGE_KEYS.entries, []);
+  const entries = safeGetItem<TimeEntry[]>(STORAGE_KEYS.entries, []);
+  const currentRate = getSettings().hourlyRate;
+
+  return entries.map((entry) => ({
+    ...entry,
+    hourlyRateAtCreation: entry.hourlyRateAtCreation ?? currentRate,
+  }));
 }
 
 export function saveEntries(entries: TimeEntry[]): void {

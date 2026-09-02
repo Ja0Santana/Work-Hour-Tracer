@@ -47,6 +47,13 @@ export function calculateEarnings(minutes: number, hourlyRate: number): number {
   return (minutes / 60) * hourlyRate;
 }
 
+export function calculateEntriesEarnings(entries: TimeEntry[]): number {
+  return entries.reduce((total, entry) => {
+    const duration = calculateDuration(entry.startTime, entry.endTime);
+    return total + (duration / 60) * entry.hourlyRateAtCreation;
+  }, 0);
+}
+
 export interface OverlapPair {
   entryA: TimeEntry;
   entryB: TimeEntry;
