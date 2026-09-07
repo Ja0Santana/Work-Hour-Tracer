@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { Download, Upload, Trash2 } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
 import { useTimeEntries } from '../hooks/useTimeEntries';
 import { exportAllData, validateImportData, importAllData, clearAllData } from '../services/storage';
@@ -173,10 +174,10 @@ export function Settings() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
             <button className="btn btn-secondary" onClick={handleExport}>
-              📥 Exportar dados
+              <Download size={15} /> Exportar dados
             </button>
             <button className="btn btn-secondary" onClick={handleImportClick}>
-              📤 Importar dados
+              <Upload size={15} /> Importar dados
             </button>
             <input
               ref={fileInputRef}
@@ -192,7 +193,7 @@ export function Settings() {
               className="btn btn-danger"
               onClick={() => setShowClearConfirm(true)}
             >
-              🗑️ Limpar todos os dados
+              <Trash2 size={15} /> Limpar todos os dados
             </button>
           </div>
         </div>

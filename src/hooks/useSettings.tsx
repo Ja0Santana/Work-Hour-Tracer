@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import type { AppSettings } from '../types/settings';
-import { getSettings, saveSettings } from '../services/storage';
+import { getSettings, saveSettings, STORAGE_KEYS } from '../services/storage';
 
 interface SettingsContextValue {
   settings: AppSettings;
@@ -11,6 +11,19 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(() => getSettings());
+
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEYS.settings || event.key === null) {
+        setSettings(getSettings());
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const updateSettings = useCallback(
     (updates: Partial<AppSettings>) => {

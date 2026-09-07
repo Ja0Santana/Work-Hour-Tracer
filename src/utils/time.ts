@@ -15,7 +15,11 @@ export function calculateDuration(startTime: string, endTime: string): number {
   const startMinutes = timeStringToMinutes(startTime);
   let endMinutes = timeStringToMinutes(endTime);
 
-  if (endMinutes <= startMinutes) {
+  if (startMinutes === endMinutes) {
+    return 0;
+  }
+
+  if (endMinutes < startMinutes) {
     endMinutes += 24 * 60;
   }
 

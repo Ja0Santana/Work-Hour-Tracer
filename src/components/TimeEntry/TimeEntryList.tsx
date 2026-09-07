@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { FileText, Plus } from 'lucide-react';
 import type { TimeEntry } from '../../types/timeEntry';
 import { useTimeEntries } from '../../hooks/useTimeEntries';
 import { getEntriesForDay, calculateTotalMinutes } from '../../utils/calculations';
@@ -10,9 +11,10 @@ import { calculateDuration } from '../../utils/time';
 interface TimeEntryListProps {
   selectedDate: string;
   onEditEntry: (entry: TimeEntry) => void;
+  onAddNew?: () => void;
 }
 
-export function TimeEntryList({ selectedDate, onEditEntry }: TimeEntryListProps) {
+export function TimeEntryList({ selectedDate, onEditEntry, onAddNew }: TimeEntryListProps) {
   const { entries, deleteEntry } = useTimeEntries();
   const [entryToDelete, setEntryToDelete] = useState<TimeEntry | null>(null);
 
@@ -37,11 +39,23 @@ export function TimeEntryList({ selectedDate, onEditEntry }: TimeEntryListProps)
   if (dayEntries.length === 0) {
     return (
       <div className="empty-state">
-        <div className="empty-state-icon">📝</div>
+        <div className="empty-state-icon">
+          <FileText size={40} strokeWidth={1.5} />
+        </div>
         <div className="empty-state-title">Nenhuma atividade registrada</div>
         <div className="empty-state-description">
           Comece a rastrear seu trabalho adicionando sua primeira atividade do dia.
         </div>
+        {onAddNew && (
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ marginTop: 'var(--space-3)' }}
+            onClick={onAddNew}
+          >
+            <Plus size={16} /> Adicionar atividade
+          </button>
+        )}
       </div>
     );
   }

@@ -249,7 +249,7 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  color: white;
 }
 
 .header-nav {
@@ -807,6 +807,60 @@ textarea:focus-visible {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+.timeline-now-indicator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  z-index: 5;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.timeline-now-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  margin-left: -3px;
+  box-shadow: 0 0 6px var(--danger);
+}
+
+.timeline-now-line {
+  width: 2px;
+  height: 100%;
+  background: var(--danger);
+  opacity: 0.8;
+}
+
+.timeline-popover {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: 280px;
+  backdrop-filter: blur(12px);
+  font-size: 0.75rem;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.timeline-popover-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.timeline-popover-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+}
+
 .entry-card {
   display: flex;
   align-items: flex-start;
@@ -899,9 +953,12 @@ textarea:focus-visible {
 }
 
 .empty-state-icon {
-  font-size: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
   margin-bottom: var(--space-4);
-  opacity: 0.4;
+  opacity: 0.6;
 }
 
 .empty-state-title {

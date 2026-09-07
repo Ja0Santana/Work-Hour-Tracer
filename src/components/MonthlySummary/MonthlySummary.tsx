@@ -1,4 +1,5 @@
 import { useMemo, useCallback } from 'react';
+import { Camera, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTimeEntries } from '../../hooks/useTimeEntries';
 import { useSettings } from '../../hooks/useSettings';
 import { calculateMonthlyMinutes, calculateEntriesEarnings, getEntriesForMonth } from '../../utils/calculations';
@@ -70,7 +71,7 @@ export function MonthlySummary({ year, month, onPrevMonth, onNextMonth }: Monthl
               onClick={onPrevMonth}
               aria-label="Mês anterior"
             >
-              ‹
+              <ChevronLeft size={16} />
             </button>
             <span className="month-nav-label">{formatMonthYear(displayDate)}</span>
             <button
@@ -78,7 +79,7 @@ export function MonthlySummary({ year, month, onPrevMonth, onNextMonth }: Monthl
               onClick={onNextMonth}
               aria-label="Próximo mês"
             >
-              ›
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>
@@ -89,7 +90,7 @@ export function MonthlySummary({ year, month, onPrevMonth, onNextMonth }: Monthl
           style={{ fontSize: '0.8125rem', padding: 'var(--space-2) var(--space-3)' }}
           title="Baixar imagem com resumo mensal"
         >
-          📷 Exportar Imagem
+          <Camera size={14} /> Exportar Imagem
         </button>
       </div>
 

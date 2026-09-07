@@ -2,7 +2,7 @@ import type { TimeEntry } from '../types/timeEntry';
 import type { AppSettings } from '../types/settings';
 import { DEFAULT_SETTINGS } from '../types/settings';
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   entries: 'work-hours.entries',
   settings: 'work-hours.settings',
   theme: 'work-hours.theme',

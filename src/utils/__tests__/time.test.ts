@@ -22,8 +22,8 @@ describe('calculateDuration', () => {
     expect(calculateDuration('00:00', '23:59')).toBe(1439);
   });
 
-  it('calcula horário igual como 24h', () => {
-    expect(calculateDuration('09:00', '09:00')).toBe(1440);
+  it('calcula horário igual como 0min', () => {
+    expect(calculateDuration('09:00', '09:00')).toBe(0);
   });
 });
 

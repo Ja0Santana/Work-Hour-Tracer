@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { Timer, Sun, Moon, Menu, X } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 
 export function Header() {
@@ -15,7 +16,9 @@ export function Header() {
   return (
     <header className="header">
       <div className="header-logo">
-        <div className="header-logo-icon">⏱</div>
+        <div className="header-logo-icon">
+          <Timer size={18} />
+        </div>
         <span>Work Hours</span>
       </div>
 
@@ -51,7 +54,7 @@ export function Header() {
           onClick={toggleTheme}
           aria-label={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
         >
-          {theme === 'dark' ? '☀️' : '🌙'}
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
         <button
           className="mobile-menu-toggle"
@@ -59,7 +62,7 @@ export function Header() {
           aria-label="Menu de navegação"
           aria-expanded={isMobileMenuOpen}
         >
-          {isMobileMenuOpen ? '✕' : '☰'}
+          {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
       </div>
     </header>

@@ -1,6 +1,9 @@
+import { Pencil, Trash2 } from 'lucide-react';
 import type { TimeEntry } from '../../types/timeEntry';
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '../../types/timeEntry';
 import { calculateDuration, formatDuration } from '../../utils/time';
+import { calculateEarnings } from '../../utils/calculations';
+import { formatCurrency } from '../../utils/currency';
 
 interface TimeEntryCardProps {
   entry: TimeEntry;
@@ -11,6 +14,7 @@ interface TimeEntryCardProps {
 export function TimeEntryCard({ entry, onEdit, onDelete }: TimeEntryCardProps) {
   const duration = calculateDuration(entry.startTime, entry.endTime);
   const categoryColor = CATEGORY_COLORS[entry.category];
+  const earnings = entry.hourlyRateAtCreation > 0 ? calculateEarnings(duration, entry.hourlyRateAtCreation) : 0;
 
   return (
     <div className="entry-card">
@@ -37,6 +41,17 @@ export function TimeEntryCard({ entry, onEdit, onDelete }: TimeEntryCardProps) {
           {entry.project && (
             <span className="entry-project">{entry.project}</span>
           )}
+          {earnings > 0 && (
+            <span
+              className="badge"
+              style={{
+                background: 'rgba(16, 185, 129, 0.12)',
+                color: 'var(--accent-primary)',
+              }}
+            >
+              {formatCurrency(earnings)}
+            </span>
+          )}
         </div>
         {entry.notes && (
           <div className="entry-notes">{entry.notes}</div>
@@ -50,7 +65,7 @@ export function TimeEntryCard({ entry, onEdit, onDelete }: TimeEntryCardProps) {
           aria-label={`Editar ${entry.description}`}
           title="Editar"
         >
-          ✏️
+          <Pencil size={15} />
         </button>
         <button
           className="btn btn-ghost btn-icon"
@@ -58,7 +73,7 @@ export function TimeEntryCard({ entry, onEdit, onDelete }: TimeEntryCardProps) {
           aria-label={`Excluir ${entry.description}`}
           title="Excluir"
         >
-          🗑️
+          <Trash2 size={15} />
         </button>
       </div>
     </div>

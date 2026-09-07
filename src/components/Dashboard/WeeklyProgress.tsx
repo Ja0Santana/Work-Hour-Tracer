@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Check } from 'lucide-react';
 import { useTimeEntries } from '../../hooks/useTimeEntries';
 import { useSettings } from '../../hooks/useSettings';
 import {
@@ -60,8 +61,8 @@ export function WeeklyProgress({ weekStart }: WeeklyProgressProps) {
               : formatDuration(remainingMinutes)}
           </div>
           {isGoalReached && (
-            <span className="card-subtitle" style={{ color: 'var(--accent-success)' }}>
-              ✓ Meta atingida
+            <span className="card-subtitle" style={{ color: 'var(--accent-success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Check size={14} /> Meta atingida
             </span>
           )}
         </div>
@@ -83,13 +84,11 @@ export function WeeklyProgress({ weekStart }: WeeklyProgressProps) {
         </div>
 
         <div className="card">
-          <span className="card-title">Valor/Hora</span>
-          <div className="card-value">{formatCurrency(settings.hourlyRate)}</div>
-        </div>
-
-        <div className="card">
           <span className="card-title">Acumulado na semana</span>
           <div className="card-value accent">{formatCurrency(earnings)}</div>
+          <span className="card-subtitle">
+            Taxa: {formatCurrency(settings.hourlyRate)}/h
+          </span>
         </div>
       </div>
     </div>

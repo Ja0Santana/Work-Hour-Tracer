@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { TimeEntry } from '../types/timeEntry';
-import { getEntries, saveEntries } from '../services/storage';
+import { getEntries, saveEntries, STORAGE_KEYS } from '../services/storage';
 
 interface TimeEntriesContextValue {
   entries: TimeEntry[];
@@ -15,6 +15,19 @@ const TimeEntriesContext = createContext<TimeEntriesContextValue | null>(null);
 
 export function TimeEntriesProvider({ children }: { children: ReactNode }) {
   const [entries, setEntries] = useState<TimeEntry[]>(() => getEntries());
+
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEYS.entries || event.key === null) {
+        setEntries(getEntries());
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const persistEntries = useCallback((updated: TimeEntry[]) => {
     setEntries(updated);

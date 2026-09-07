@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { X } from 'lucide-react';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ export function ConfirmDialog({
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
           <button className="modal-close" onClick={onCancel} aria-label="Fechar">
-            ✕
+            <X size={18} />
           </button>
         </div>
         <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>

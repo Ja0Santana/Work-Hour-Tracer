@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { X, Clock, AlertTriangle } from 'lucide-react';
 import type { TimeEntry, ActivityCategory } from '../../types/timeEntry';
 import { ACTIVITY_CATEGORIES, CATEGORY_LABELS } from '../../types/timeEntry';
 import { calculateDuration, formatDuration, isValidTimeString } from '../../utils/time';
@@ -10,6 +11,7 @@ import { detectOverlaps } from '../../utils/calculations';
 interface TimeEntryFormProps {
   isOpen: boolean;
   editingEntry?: TimeEntry | null;
+  defaultDate?: string;
   onClose: () => void;
 }
 
@@ -40,7 +42,7 @@ interface FormErrors {
   description?: string;
 }
 
-export function TimeEntryForm({ isOpen, editingEntry, onClose }: TimeEntryFormProps) {
+export function TimeEntryForm({ isOpen, editingEntry, defaultDate, onClose }: TimeEntryFormProps) {
   const { entries, addEntry, updateEntry } = useTimeEntries();
   const { settings } = useSettings();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
@@ -59,11 +61,26 @@ export function TimeEntryForm({ isOpen, editingEntry, onClose }: TimeEntryFormPr
           notes: editingEntry.notes ?? '',
         });
       } else {
-        setForm({ ...INITIAL_FORM, date: getTodayString() });
+        setForm({ ...INITIAL_FORM, date: defaultDate || getTodayString() });
       }
       setErrors({});
     }
-  }, [isOpen, editingEntry]);
+  }, [isOpen, editingEntry, defaultDate]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   const duration = useMemo(() => {
     if (isValidTimeString(form.startTime) && isValidTimeString(form.endTime)) {
@@ -121,6 +138,9 @@ export function TimeEntryForm({ isOpen, editingEntry, onClose }: TimeEntryFormPr
     if (!isValidTimeString(form.endTime)) {
       newErrors.endTime = 'Horário inválido';
     }
+    if (isValidTimeString(form.startTime) && isValidTimeString(form.endTime) && form.startTime === form.endTime) {
+      newErrors.endTime = 'Início e fim não podem ser iguais';
+    }
     if (!form.description.trim()) {
       newErrors.description = 'Descrição obrigatória';
     }
@@ -169,7 +189,7 @@ export function TimeEntryForm({ isOpen, editingEntry, onClose }: TimeEntryFormPr
             {editingEntry ? 'Editar Atividade' : 'Nova Atividade'}
           </h2>
           <button className="modal-close" onClick={onClose} aria-label="Fechar">
-            ✕
+            <X size={18} />
           </button>
         </div>
 
@@ -257,13 +277,14 @@ export function TimeEntryForm({ isOpen, editingEntry, onClose }: TimeEntryFormPr
               fontWeight: 600,
               color: 'var(--accent-primary)',
             }}>
-              ⏱ Duração: {formatDuration(duration)}
+              <Clock size={16} /> Duração: {formatDuration(duration)}
             </div>
           )}
 
           {overlapWarning && (
-            <div className="overlap-warning">
-              ⚠ {overlapWarning}
+            <div className="overlap-warning" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+              <span>{overlapWarning}</span>
             </div>
           )}
 

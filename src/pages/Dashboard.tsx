@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { TimeEntry } from '../types/timeEntry';
 import { getWeekStart, getTodayString, formatDateShort } from '../utils/date';
 import { WeeklyProgress } from '../components/Dashboard/WeeklyProgress';
@@ -66,7 +67,7 @@ export function Dashboard() {
           className="btn btn-primary btn-lg"
           onClick={() => setIsFormOpen(true)}
         >
-          + Adicionar atividade
+          <Plus size={18} /> Adicionar atividade
         </button>
       </div>
 
@@ -79,7 +80,7 @@ export function Dashboard() {
               onClick={handlePrevWeek}
               aria-label="Semana anterior"
             >
-              ‹
+              <ChevronLeft size={16} />
             </button>
             <button
               className="btn btn-ghost"
@@ -93,7 +94,7 @@ export function Dashboard() {
               onClick={handleNextWeek}
               aria-label="Próxima semana"
             >
-              ›
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>
@@ -139,12 +140,14 @@ export function Dashboard() {
         <TimeEntryList
           selectedDate={selectedDate}
           onEditEntry={handleEditEntry}
+          onAddNew={() => setIsFormOpen(true)}
         />
       </div>
 
       <TimeEntryForm
         isOpen={isFormOpen}
         editingEntry={editingEntry}
+        defaultDate={selectedDate}
         onClose={handleCloseForm}
       />
     </div>
