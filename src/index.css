@@ -802,9 +802,10 @@ textarea:focus-visible {
 }
 
 .timeline-block:hover {
-  transform: scaleY(1.08);
+  filter: brightness(1.12);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  outline: 1px solid rgba(255, 255, 255, 0.25);
   z-index: 2;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .timeline-now-indicator {
@@ -834,6 +835,9 @@ textarea:focus-visible {
 }
 
 .timeline-popover {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);

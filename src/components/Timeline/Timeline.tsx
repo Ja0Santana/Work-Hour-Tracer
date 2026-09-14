@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Folder } from 'lucide-react';
 import type { TimeEntry } from '../../types/timeEntry';
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '../../types/timeEntry';
@@ -61,7 +62,30 @@ function assignLanes(entries: TimeEntry[]): EntryWithLane[] {
 export function Timeline({ selectedDate, onSelectEntry }: TimelineProps) {
   const { entries } = useTimeEntries();
   const [isWorkHoursMode, setIsWorkHoursMode] = useState(true);
-  const [hoveredItem, setHoveredItem] = useState<{ entry: TimeEntry; x: number; y: number } | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<{
+    entry: TimeEntry;
+    coordinateX: number;
+    coordinateY: number;
+    shouldPlaceBelow: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!hoveredItem) {
+      return;
+    }
+
+    function handleDismissPopover() {
+      setHoveredItem(null);
+    }
+
+    window.addEventListener('scroll', handleDismissPopover, { passive: true, capture: true });
+    window.addEventListener('resize', handleDismissPopover, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleDismissPopover, { capture: true });
+      window.removeEventListener('resize', handleDismissPopover);
+    };
+  }, [hoveredItem]);
 
   const dayEntries = useMemo(
     () => getEntriesForDay(entries, selectedDate),
@@ -199,11 +223,24 @@ export function Timeline({ selectedDate, onSelectEntry }: TimelineProps) {
                   style={getBlockStyle(item)}
                   onClick={() => onSelectEntry(item.entry)}
                   onMouseEnter={(event) => {
-                    const rect = event.currentTarget.getBoundingClientRect();
+                    const boundingRectangle = event.currentTarget.getBoundingClientRect();
+                    const estimatedPopoverWidth = 280;
+                    const halfPopoverWidth = estimatedPopoverWidth / 2;
+                    const rawCoordinateX = boundingRectangle.left + boundingRectangle.width / 2;
+                    const clampedCoordinateX = Math.max(
+                      halfPopoverWidth + 16,
+                      Math.min(window.innerWidth - halfPopoverWidth - 16, rawCoordinateX)
+                    );
+                    const shouldPlaceBelow = boundingRectangle.top < 120;
+                    const coordinateY = shouldPlaceBelow
+                      ? boundingRectangle.bottom + 8
+                      : boundingRectangle.top - 8;
+
                     setHoveredItem({
                       entry: item.entry,
-                      x: rect.left + rect.width / 2,
-                      y: rect.top,
+                      coordinateX: clampedCoordinateX,
+                      coordinateY,
+                      shouldPlaceBelow,
                     });
                   }}
                   onMouseLeave={() => setHoveredItem(null)}
@@ -236,43 +273,44 @@ export function Timeline({ selectedDate, onSelectEntry }: TimelineProps) {
         </div>
       )}
 
-      {hoveredItem && (
-        <div
-          className="timeline-popover"
-          style={{
-            position: 'fixed',
-            left: `${hoveredItem.x}px`,
-            top: `${hoveredItem.y - 8}px`,
-            transform: 'translate(-50%, -100%)',
-            pointerEvents: 'none',
-            zIndex: 1000,
-          }}
-        >
-          <div className="timeline-popover-title">{hoveredItem.entry.description}</div>
-          <div className="timeline-popover-meta">
-            <span
-              className="badge"
-              style={{
-                background: `${CATEGORY_COLORS[hoveredItem.entry.category]}20`,
-                color: CATEGORY_COLORS[hoveredItem.entry.category],
-                fontSize: '0.6875rem',
-                padding: '2px 6px',
-              }}
-            >
-              {CATEGORY_LABELS[hoveredItem.entry.category]}
-            </span>
-            <span>
-              {hoveredItem.entry.startTime} – {hoveredItem.entry.endTime} (
-              {formatDuration(calculateDuration(hoveredItem.entry.startTime, hoveredItem.entry.endTime))})
-            </span>
-          </div>
-          {hoveredItem.entry.project && (
-            <div style={{ color: 'var(--accent-primary)', fontSize: '0.6875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Folder size={12} /> {hoveredItem.entry.project}
+      {hoveredItem &&
+        createPortal(
+          <div
+            className="timeline-popover"
+            style={{
+              left: `${hoveredItem.coordinateX}px`,
+              top: `${hoveredItem.coordinateY}px`,
+              transform: hoveredItem.shouldPlaceBelow
+                ? 'translate(-50%, 0)'
+                : 'translate(-50%, -100%)',
+            }}
+          >
+            <div className="timeline-popover-title">{hoveredItem.entry.description}</div>
+            <div className="timeline-popover-meta">
+              <span
+                className="badge"
+                style={{
+                  background: `${CATEGORY_COLORS[hoveredItem.entry.category]}20`,
+                  color: CATEGORY_COLORS[hoveredItem.entry.category],
+                  fontSize: '0.6875rem',
+                  padding: '2px 6px',
+                }}
+              >
+                {CATEGORY_LABELS[hoveredItem.entry.category]}
+              </span>
+              <span>
+                {hoveredItem.entry.startTime} – {hoveredItem.entry.endTime} (
+                {formatDuration(calculateDuration(hoveredItem.entry.startTime, hoveredItem.entry.endTime))})
+              </span>
             </div>
-          )}
-        </div>
-      )}
+            {hoveredItem.entry.project && (
+              <div style={{ color: 'var(--accent-primary)', fontSize: '0.6875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Folder size={12} /> {hoveredItem.entry.project}
+              </div>
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
