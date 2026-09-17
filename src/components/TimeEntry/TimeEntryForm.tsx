@@ -6,11 +6,13 @@ import { calculateDuration, formatDuration, isValidTimeString } from '../../util
 import { getTodayString, isValidDateString } from '../../utils/date';
 import { useTimeEntries } from '../../hooks/useTimeEntries';
 import { useSettings } from '../../hooks/useSettings';
+import { useToast } from '../../hooks/useToast';
 import { detectOverlaps } from '../../utils/calculations';
 
 interface TimeEntryFormProps {
   isOpen: boolean;
   editingEntry?: TimeEntry | null;
+  initialValues?: Partial<TimeEntry> | null;
   defaultDate?: string;
   onClose: () => void;
 }
@@ -42,9 +44,10 @@ interface FormErrors {
   description?: string;
 }
 
-export function TimeEntryForm({ isOpen, editingEntry, defaultDate, onClose }: TimeEntryFormProps) {
+export function TimeEntryForm({ isOpen, editingEntry, initialValues, defaultDate, onClose }: TimeEntryFormProps) {
   const { entries, addEntry, updateEntry } = useTimeEntries();
   const { settings } = useSettings();
+  const { showToast } = useToast();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -60,12 +63,22 @@ export function TimeEntryForm({ isOpen, editingEntry, defaultDate, onClose }: Ti
           description: editingEntry.description,
           notes: editingEntry.notes ?? '',
         });
+      } else if (initialValues) {
+        setForm({
+          date: initialValues.date || defaultDate || getTodayString(),
+          project: initialValues.project || '',
+          category: initialValues.category || 'development',
+          startTime: initialValues.startTime || '',
+          endTime: initialValues.endTime || '',
+          description: initialValues.description || '',
+          notes: initialValues.notes ?? '',
+        });
       } else {
         setForm({ ...INITIAL_FORM, date: defaultDate || getTodayString() });
       }
       setErrors({});
     }
-  }, [isOpen, editingEntry, defaultDate]);
+  }, [isOpen, editingEntry, initialValues, defaultDate]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -73,6 +86,10 @@ export function TimeEntryForm({ isOpen, editingEntry, defaultDate, onClose }: Ti
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose();
+      } else if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+        event.preventDefault();
+        const submitButton = document.getElementById('time-entry-submit-btn');
+        submitButton?.click();
       }
     };
 
@@ -165,8 +182,10 @@ export function TimeEntryForm({ isOpen, editingEntry, defaultDate, onClose }: Ti
 
     if (editingEntry) {
       updateEntry(editingEntry.id, entryData);
+      showToast({ message: 'Atividade atualizada com sucesso.', type: 'success' });
     } else {
       addEntry({ ...entryData, hourlyRateAtCreation: settings.hourlyRate });
+      showToast({ message: 'Atividade adicionada com sucesso.', type: 'success' });
     }
 
     onClose();
@@ -316,7 +335,7 @@ export function TimeEntryForm({ isOpen, editingEntry, defaultDate, onClose }: Ti
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               Cancelar
             </button>
-            <button type="submit" className="btn btn-primary">
+            <button id="time-entry-submit-btn" type="submit" className="btn btn-primary">
               {editingEntry ? 'Salvar' : 'Adicionar'}
             </button>
           </div>

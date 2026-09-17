@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { FileText, Plus } from 'lucide-react';
 import type { TimeEntry } from '../../types/timeEntry';
 import { useTimeEntries } from '../../hooks/useTimeEntries';
+import { useToast } from '../../hooks/useToast';
 import { getEntriesForDay, calculateTotalMinutes } from '../../utils/calculations';
 import { formatDuration } from '../../utils/time';
 import { TimeEntryCard } from './TimeEntryCard';
@@ -11,11 +12,13 @@ import { calculateDuration } from '../../utils/time';
 interface TimeEntryListProps {
   selectedDate: string;
   onEditEntry: (entry: TimeEntry) => void;
+  onDuplicateEntry?: (entry: TimeEntry) => void;
   onAddNew?: () => void;
 }
 
-export function TimeEntryList({ selectedDate, onEditEntry, onAddNew }: TimeEntryListProps) {
-  const { entries, deleteEntry } = useTimeEntries();
+export function TimeEntryList({ selectedDate, onEditEntry, onDuplicateEntry, onAddNew }: TimeEntryListProps) {
+  const { entries, deleteEntry, restoreEntry } = useTimeEntries();
+  const { showToast } = useToast();
   const [entryToDelete, setEntryToDelete] = useState<TimeEntry | null>(null);
 
   const dayEntries = useMemo(() => {
@@ -31,8 +34,17 @@ export function TimeEntryList({ selectedDate, onEditEntry, onAddNew }: TimeEntry
 
   function handleConfirmDelete() {
     if (entryToDelete) {
-      deleteEntry(entryToDelete.id);
+      const removedEntry = entryToDelete;
+      deleteEntry(removedEntry.id);
       setEntryToDelete(null);
+      showToast({
+        message: `Atividade "${removedEntry.description}" excluída.`,
+        type: 'info',
+        actionLabel: 'Desfazer',
+        onAction: () => {
+          restoreEntry(removedEntry);
+        },
+      });
     }
   }
 
@@ -79,6 +91,7 @@ export function TimeEntryList({ selectedDate, onEditEntry, onAddNew }: TimeEntry
             key={entry.id}
             entry={entry}
             onEdit={onEditEntry}
+            onDuplicate={onDuplicateEntry}
             onDelete={setEntryToDelete}
           />
         ))}

@@ -1,22 +1,25 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Camera, FileSpreadsheet, Calendar, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Camera, FileSpreadsheet, Calendar, Search, Download } from 'lucide-react';
 import type { TimeEntry, ActivityCategory } from '../types/timeEntry';
 import { ACTIVITY_CATEGORIES, CATEGORY_LABELS, CATEGORY_COLORS } from '../types/timeEntry';
 import { useTimeEntries } from '../hooks/useTimeEntries';
+import { useToast } from '../hooks/useToast';
 import { getEntriesForMonth, calculateTotalMinutes, calculateEntriesEarnings } from '../utils/calculations';
 import { formatMonthYear, parseDateString, formatDateDisplay } from '../utils/date';
 import { calculateDuration, formatDuration } from '../utils/time';
 import { formatCurrency } from '../utils/currency';
 import { downloadMonthlySummaryImage } from '../utils/imageGenerator';
 import { exportMonthToExcel } from '../utils/excelExporter';
+import { exportMonthToCsv } from '../utils/csvExporter';
 import { TimeEntryCard } from '../components/TimeEntry/TimeEntryCard';
 import { TimeEntryForm } from '../components/TimeEntry/TimeEntryForm';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { useSettings } from '../hooks/useSettings';
 
 export function History() {
-  const { entries, deleteEntry } = useTimeEntries();
+  const { entries, deleteEntry, restoreEntry } = useTimeEntries();
   const { settings } = useSettings();
+  const { showToast } = useToast();
   const today = new Date();
 
   const [monthYear, setMonthYear] = useState({
@@ -29,6 +32,7 @@ export function History() {
   const [selectedProject, setSelectedProject] = useState<string>('all');
 
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
+  const [initialFormValues, setInitialFormValues] = useState<Partial<TimeEntry> | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<TimeEntry | null>(null);
 
   const monthEntries = useMemo(
@@ -119,9 +123,34 @@ export function History() {
 
   function handleConfirmDelete() {
     if (entryToDelete) {
-      deleteEntry(entryToDelete.id);
+      const removedEntry = entryToDelete;
+      deleteEntry(removedEntry.id);
       setEntryToDelete(null);
+      showToast({
+        message: `Atividade "${removedEntry.description}" excluída.`,
+        type: 'info',
+        actionLabel: 'Desfazer',
+        onAction: () => {
+          restoreEntry(removedEntry);
+        },
+      });
     }
+  }
+
+  function handleDuplicateEntry(entry: TimeEntry) {
+    setEditingEntry(null);
+    setInitialFormValues({
+      date: entry.date,
+      project: entry.project,
+      category: entry.category,
+      description: entry.description,
+      notes: entry.notes,
+    });
+  }
+
+  function handleCloseForm() {
+    setEditingEntry(null);
+    setInitialFormValues(null);
   }
 
   const monthName = displayDate.toLocaleDateString('pt-BR', { month: 'long' });
@@ -148,6 +177,14 @@ export function History() {
     });
   }
 
+  function handleExportCsv() {
+    exportMonthToCsv({
+      entries: monthEntries,
+      year: monthYear.year,
+      month: monthYear.month,
+    });
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -163,6 +200,7 @@ export function History() {
             </button>
           </div>
           <button
+            type="button"
             className="btn btn-secondary"
             onClick={handleExportImage}
             style={{ fontSize: '0.8125rem', padding: 'var(--space-2) var(--space-3)' }}
@@ -171,6 +209,7 @@ export function History() {
             <Camera size={14} /> Exportar Imagem
           </button>
           <button
+            type="button"
             className="btn btn-secondary"
             onClick={handleExportExcel}
             style={{ fontSize: '0.8125rem', padding: 'var(--space-2) var(--space-3)' }}
@@ -178,6 +217,16 @@ export function History() {
             disabled={monthEntries.length === 0}
           >
             <FileSpreadsheet size={14} /> Exportar Excel
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleExportCsv}
+            style={{ fontSize: '0.8125rem', padding: 'var(--space-2) var(--space-3)' }}
+            title="Baixar arquivo CSV com dados do mês"
+            disabled={monthEntries.length === 0}
+          >
+            <Download size={14} /> Exportar CSV
           </button>
         </div>
       </div>
@@ -202,23 +251,14 @@ export function History() {
           {categoryBreakdown.length > 0 && (
             <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
               <span className="card-title">Distribuição por Categoria</span>
-              <div
-                style={{
-                  display: 'flex',
-                  height: '10px',
-                  borderRadius: 'var(--radius-full)',
-                  overflow: 'hidden',
-                  margin: 'var(--space-3) 0 var(--space-4) 0',
-                  background: 'var(--bg-tertiary)',
-                }}
-              >
+              <div className="category-distribution-bar">
                 {categoryBreakdown.map((item) => (
                   <div
                     key={item.category}
+                    className="category-distribution-segment"
                     style={{
                       width: `${item.percentage}%`,
                       background: CATEGORY_COLORS[item.category],
-                      transition: 'width var(--transition-normal)',
                     }}
                     title={`${CATEGORY_LABELS[item.category]}: ${item.percentage.toFixed(1)}% (${formatDuration(item.minutes)})`}
                   />
@@ -385,6 +425,7 @@ export function History() {
                   key={entry.id}
                   entry={entry}
                   onEdit={setEditingEntry}
+                  onDuplicate={handleDuplicateEntry}
                   onDelete={setEntryToDelete}
                 />
               ))}
@@ -394,10 +435,11 @@ export function History() {
       )}
 
       <TimeEntryForm
-        isOpen={editingEntry !== null}
+        isOpen={editingEntry !== null || initialFormValues !== null}
         editingEntry={editingEntry}
-        defaultDate={editingEntry?.date}
-        onClose={() => setEditingEntry(null)}
+        initialValues={initialFormValues}
+        defaultDate={editingEntry?.date || initialFormValues?.date}
+        onClose={handleCloseForm}
       />
 
       <ConfirmDialog

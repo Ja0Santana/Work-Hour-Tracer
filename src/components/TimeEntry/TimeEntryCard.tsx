@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Copy } from 'lucide-react';
 import type { TimeEntry } from '../../types/timeEntry';
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '../../types/timeEntry';
 import { calculateDuration, formatDuration } from '../../utils/time';
@@ -9,9 +9,10 @@ interface TimeEntryCardProps {
   entry: TimeEntry;
   onEdit: (entry: TimeEntry) => void;
   onDelete: (entry: TimeEntry) => void;
+  onDuplicate?: (entry: TimeEntry) => void;
 }
 
-export function TimeEntryCard({ entry, onEdit, onDelete }: TimeEntryCardProps) {
+export function TimeEntryCard({ entry, onEdit, onDelete, onDuplicate }: TimeEntryCardProps) {
   const duration = calculateDuration(entry.startTime, entry.endTime);
   const categoryColor = CATEGORY_COLORS[entry.category];
   const earnings = entry.hourlyRateAtCreation > 0 ? calculateEarnings(duration, entry.hourlyRateAtCreation) : 0;
@@ -30,12 +31,13 @@ export function TimeEntryCard({ entry, onEdit, onDelete }: TimeEntryCardProps) {
         <div className="entry-description">{entry.description}</div>
         <div className="entry-meta">
           <span
-            className="badge"
+            className="badge badge-category"
             style={{
-              background: `${categoryColor}20`,
+              background: `${categoryColor}18`,
               color: categoryColor,
             }}
           >
+            <span className="category-status-dot" style={{ background: categoryColor }} />
             {CATEGORY_LABELS[entry.category]}
           </span>
           {entry.project && (
@@ -59,7 +61,19 @@ export function TimeEntryCard({ entry, onEdit, onDelete }: TimeEntryCardProps) {
       </div>
 
       <div className="entry-actions">
+        {onDuplicate && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon"
+            onClick={() => onDuplicate(entry)}
+            aria-label={`Duplicar ${entry.description}`}
+            title="Duplicar"
+          >
+            <Copy size={15} />
+          </button>
+        )}
         <button
+          type="button"
           className="btn btn-ghost btn-icon"
           onClick={() => onEdit(entry)}
           aria-label={`Editar ${entry.description}`}
@@ -68,6 +82,7 @@ export function TimeEntryCard({ entry, onEdit, onDelete }: TimeEntryCardProps) {
           <Pencil size={15} />
         </button>
         <button
+          type="button"
           className="btn btn-ghost btn-icon"
           onClick={() => onDelete(entry)}
           aria-label={`Excluir ${entry.description}`}

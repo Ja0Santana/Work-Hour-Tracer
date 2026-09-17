@@ -132,9 +132,23 @@ export function Timeline({ selectedDate, onSelectEntry }: TimelineProps) {
   const totalTimelineHeight = 20 + 8 + blocksHeight + 8;
 
   const isToday = selectedDate === getTodayString();
+  const [currentMinuteTimestamp, setCurrentMinuteTimestamp] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!isToday) return;
+
+    const intervalId = setInterval(() => {
+      setCurrentMinuteTimestamp(Date.now());
+    }, 30000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [isToday]);
+
   const currentNowPercent = useMemo(() => {
     if (!isToday) return null;
-    const now = new Date();
+    const now = new Date(currentMinuteTimestamp);
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const timelineStartMinutes = startHour * 60;
     const timelineTotalMinutes = totalHours * 60;
@@ -144,7 +158,7 @@ export function Timeline({ selectedDate, onSelectEntry }: TimelineProps) {
     }
 
     return ((currentMinutes - timelineStartMinutes) / timelineTotalMinutes) * 100;
-  }, [isToday, startHour, endHour, totalHours]);
+  }, [isToday, currentMinuteTimestamp, startHour, endHour, totalHours]);
 
   function getBlockStyle(item: EntryWithLane): React.CSSProperties {
     const timelineStartMinutes = startHour * 60;

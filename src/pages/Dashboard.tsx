@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { TimeEntry } from '../types/timeEntry';
+import type { StoppedTimerResult } from '../hooks/useLiveTimer';
 import { getWeekStart, getTodayString, formatDateShort } from '../utils/date';
 import { WeeklyProgress } from '../components/Dashboard/WeeklyProgress';
 import { WeekCalendar } from '../components/WeeklyGoal/WeekCalendar';
@@ -8,6 +9,7 @@ import { MonthlySummary } from '../components/MonthlySummary/MonthlySummary';
 import { Timeline } from '../components/Timeline/Timeline';
 import { TimeEntryList } from '../components/TimeEntry/TimeEntryList';
 import { TimeEntryForm } from '../components/TimeEntry/TimeEntryForm';
+import { LiveTracker } from '../components/Dashboard/LiveTracker';
 
 export function Dashboard() {
   const today = new Date();
@@ -15,6 +17,7 @@ export function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
+  const [initialFormValues, setInitialFormValues] = useState<Partial<TimeEntry> | null>(null);
 
   const [monthYear, setMonthYear] = useState({ year: today.getFullYear(), month: today.getMonth() });
 
@@ -46,13 +49,40 @@ export function Dashboard() {
   }, []);
 
   function handleEditEntry(entry: TimeEntry) {
+    setInitialFormValues(null);
     setEditingEntry(entry);
+    setIsFormOpen(true);
+  }
+
+  function handleDuplicateEntry(entry: TimeEntry) {
+    setEditingEntry(null);
+    setInitialFormValues({
+      date: selectedDate,
+      project: entry.project,
+      category: entry.category,
+      description: entry.description,
+      notes: entry.notes,
+    });
+    setIsFormOpen(true);
+  }
+
+  function handleFinishLiveTimer(timerResult: StoppedTimerResult) {
+    setEditingEntry(null);
+    setInitialFormValues({
+      date: getTodayString(),
+      startTime: timerResult.startTime,
+      endTime: timerResult.endTime,
+      project: timerResult.project,
+      description: timerResult.description,
+    });
+    setSelectedDate(getTodayString());
     setIsFormOpen(true);
   }
 
   function handleCloseForm() {
     setIsFormOpen(false);
     setEditingEntry(null);
+    setInitialFormValues(null);
   }
 
   function handleTimelineSelect(entry: TimeEntry) {
@@ -65,11 +95,17 @@ export function Dashboard() {
         <h1 className="page-title">Dashboard</h1>
         <button
           className="btn btn-primary btn-lg"
-          onClick={() => setIsFormOpen(true)}
+          onClick={() => {
+            setInitialFormValues(null);
+            setEditingEntry(null);
+            setIsFormOpen(true);
+          }}
         >
           <Plus size={18} /> Adicionar atividade
         </button>
       </div>
+
+      <LiveTracker onFinishTimer={handleFinishLiveTimer} />
 
       <div className="section">
         <div className="section-header">
@@ -140,13 +176,19 @@ export function Dashboard() {
         <TimeEntryList
           selectedDate={selectedDate}
           onEditEntry={handleEditEntry}
-          onAddNew={() => setIsFormOpen(true)}
+          onDuplicateEntry={handleDuplicateEntry}
+          onAddNew={() => {
+            setInitialFormValues(null);
+            setEditingEntry(null);
+            setIsFormOpen(true);
+          }}
         />
       </div>
 
       <TimeEntryForm
         isOpen={isFormOpen}
         editingEntry={editingEntry}
+        initialValues={initialFormValues}
         defaultDate={selectedDate}
         onClose={handleCloseForm}
       />

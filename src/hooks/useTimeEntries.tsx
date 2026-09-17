@@ -6,6 +6,7 @@ import { getEntries, saveEntries, STORAGE_KEYS } from '../services/storage';
 interface TimeEntriesContextValue {
   entries: TimeEntry[];
   addEntry: (entry: Omit<TimeEntry, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  restoreEntry: (entry: TimeEntry) => void;
   updateEntry: (id: string, updates: Partial<Omit<TimeEntry, 'id' | 'createdAt'>>) => void;
   deleteEntry: (id: string) => void;
   setAllEntries: (entries: TimeEntry[]) => void;
@@ -46,6 +47,13 @@ export function TimeEntriesProvider({ children }: { children: ReactNode }) {
     [entries, persistEntries],
   );
 
+  const restoreEntry = useCallback(
+    (entryToRestore: TimeEntry) => {
+      persistEntries([...entries, entryToRestore]);
+    },
+    [entries, persistEntries],
+  );
+
   const updateEntry = useCallback(
     (id: string, updates: Partial<Omit<TimeEntry, 'id' | 'createdAt'>>) => {
       const updated = entries.map((entry) =>
@@ -73,8 +81,8 @@ export function TimeEntriesProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ entries, addEntry, updateEntry, deleteEntry, setAllEntries }),
-    [entries, addEntry, updateEntry, deleteEntry, setAllEntries],
+    () => ({ entries, addEntry, restoreEntry, updateEntry, deleteEntry, setAllEntries }),
+    [entries, addEntry, restoreEntry, updateEntry, deleteEntry, setAllEntries],
   );
 
   return (

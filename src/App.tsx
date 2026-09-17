@@ -2,6 +2,8 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { TimeEntriesProvider } from './hooks/useTimeEntries';
 import { SettingsProvider } from './hooks/useSettings';
 import { ThemeProvider } from './hooks/useTheme';
+import { ToastProvider } from './hooks/useToast';
+import { ToastContainer } from './components/common/Toast';
 import { Header } from './components/Header/Header';
 import { Dashboard } from './pages/Dashboard';
 import { History } from './pages/History';
@@ -12,20 +14,24 @@ export function App() {
     <ThemeProvider>
       <SettingsProvider>
         <TimeEntriesProvider>
-          <HashRouter>
-            <div className="app-layout">
-              <Header />
-              <main className="app-main">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/history" element={<History />} />
-                  <Route path="/settings" element={<Settings />} />
-                </Routes>
-              </main>
-            </div>
-          </HashRouter>
+          <ToastProvider>
+            <HashRouter>
+              <div className="app-layout">
+                <Header />
+                <main className="app-main">
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/history" element={<History />} />
+                    <Route path="/settings" element={<Settings />} />
+                  </Routes>
+                </main>
+                <ToastContainer />
+              </div>
+            </HashRouter>
+          </ToastProvider>
         </TimeEntriesProvider>
       </SettingsProvider>
     </ThemeProvider>
   );
 }
+

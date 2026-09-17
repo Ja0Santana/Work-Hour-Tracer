@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTimeEntries } from '../../hooks/useTimeEntries';
+import { useSettings } from '../../hooks/useSettings';
 import { getDailyTotals } from '../../utils/calculations';
 import { getWeekDays, formatWeekdayShort, toDateString, isSameDay } from '../../utils/date';
 import { formatDuration } from '../../utils/time';
@@ -12,9 +13,14 @@ interface WeekCalendarProps {
 
 export function WeekCalendar({ weekStart, selectedDate, onSelectDate }: WeekCalendarProps) {
   const { entries } = useTimeEntries();
+  const { settings } = useSettings();
   const days = useMemo(() => getWeekDays(weekStart), [weekStart]);
   const dailyTotals = useMemo(() => getDailyTotals(entries, weekStart), [entries, weekStart]);
   const today = new Date();
+
+  const dailyGoalReference = useMemo(() => {
+    return Math.max(60, Math.round(settings.weeklyGoalMinutes / 5));
+  }, [settings.weeklyGoalMinutes]);
 
   return (
     <div className="week-calendar">
@@ -23,10 +29,12 @@ export function WeekCalendar({ weekStart, selectedDate, onSelectDate }: WeekCale
         const isActive = dateStr === selectedDate;
         const isToday = isSameDay(day, today);
         const totalMinutes = dailyTotals.get(dateStr) ?? 0;
+        const progressPercentage = Math.min(100, Math.round((totalMinutes / dailyGoalReference) * 100));
 
         return (
           <button
             key={dateStr}
+            type="button"
             className={`week-day ${isActive ? 'active' : ''} ${isToday ? 'today' : ''}`}
             onClick={() => onSelectDate(dateStr)}
             aria-label={`${formatWeekdayShort(day)} ${day.getDate()} - ${formatDuration(totalMinutes)}`}
@@ -37,6 +45,12 @@ export function WeekCalendar({ weekStart, selectedDate, onSelectDate }: WeekCale
             <span className="week-day-hours">
               {totalMinutes > 0 ? formatDuration(totalMinutes) : '—'}
             </span>
+            <div className="week-day-bar-track">
+              <div
+                className={`week-day-bar-fill ${totalMinutes >= dailyGoalReference ? 'goal-reached' : ''}`}
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
           </button>
         );
       })}
