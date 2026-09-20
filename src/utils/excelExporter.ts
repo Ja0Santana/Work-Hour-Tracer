@@ -32,8 +32,14 @@ function calculateEntryEarnings(entry: TimeEntry): number {
   return (duration / 60) * entry.hourlyRateAtCreation;
 }
 
-export function exportMonthToExcel({ entries, year, month, monthName }: ExportMonthParams): void {
-  if (entries.length === 0) return;
+export interface BuildExcelRowsParams {
+  entries: TimeEntry[];
+  year: number;
+  monthName: string;
+}
+
+export function buildExcelReportRows({ entries, year, monthName }: BuildExcelRowsParams): (string | number | null)[][] {
+  if (entries.length === 0) return [];
 
   const dayGroups = new Map<string, TimeEntry[]>();
   for (const entry of entries) {
@@ -42,7 +48,9 @@ export function exportMonthToExcel({ entries, year, month, monthName }: ExportMo
     dayGroups.set(entry.date, existing);
   }
 
-  const sortedDays = Array.from(dayGroups.entries()).sort(([a], [b]) => a.localeCompare(b));
+  const sortedDays = Array.from(dayGroups.entries()).sort(([firstDate], [secondDate]) =>
+    firstDate.localeCompare(secondDate),
+  );
   const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
   const HEADERS = ['Dia', 'Horário', 'Duração', 'Categoria', 'Valor/Hora', 'Descrição', 'Ganho'];
@@ -56,22 +64,35 @@ export function exportMonthToExcel({ entries, year, month, monthName }: ExportMo
   let totalMonthMinutes = 0;
   let totalMonthEarnings = 0;
 
-  for (const [dateStr, dayEntries] of sortedDays) {
-    const sortedEntries = [...dayEntries].sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const dayDividerRow = [
+    '──────────────────────',
+    '────────────────',
+    '──────────',
+    '──────────────────',
+    '──────────────',
+    '──────────────────────────────────────────────────',
+    '──────────────',
+  ];
+
+  for (let dayIndex = 0; dayIndex < sortedDays.length; dayIndex++) {
+    const [dateStr, dayEntries] = sortedDays[dayIndex];
+    const sortedEntries = [...dayEntries].sort((firstEntry, secondEntry) =>
+      firstEntry.startTime.localeCompare(secondEntry.startTime),
+    );
     const dayLabel = formatDayHeader(dateStr);
 
     let dayTotalMinutes = 0;
     let dayTotalEarnings = 0;
 
-    for (let i = 0; i < sortedEntries.length; i++) {
-      const entry = sortedEntries[i];
+    for (let entryIndex = 0; entryIndex < sortedEntries.length; entryIndex++) {
+      const entry = sortedEntries[entryIndex];
       const duration = calculateDuration(entry.startTime, entry.endTime);
       const earnings = calculateEntryEarnings(entry);
       dayTotalMinutes += duration;
       dayTotalEarnings += earnings;
 
       rows.push([
-        i === 0 ? dayLabel : '',
+        entryIndex === 0 ? dayLabel : '',
         `${entry.startTime} – ${entry.endTime}`,
         formatDurationHHMM(duration),
         CATEGORY_LABELS[entry.category],
@@ -94,10 +115,13 @@ export function exportMonthToExcel({ entries, year, month, monthName }: ExportMo
       formatCurrency(dayTotalEarnings),
     ]);
 
-    rows.push([]);
+    const isLastDay = dayIndex === sortedDays.length - 1;
+    if (!isLastDay) {
+      rows.push(dayDividerRow);
+    }
   }
 
-  rows.push([]);
+  rows.push(dayDividerRow);
 
   rows.push([
     'Total do mês',
@@ -109,6 +133,14 @@ export function exportMonthToExcel({ entries, year, month, monthName }: ExportMo
     formatCurrency(totalMonthEarnings),
   ]);
 
+  return rows;
+}
+
+export function exportMonthToExcel({ entries, year, month, monthName }: ExportMonthParams): void {
+  if (entries.length === 0) return;
+
+  const rows = buildExcelReportRows({ entries, year, monthName });
+  const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
   const worksheet = XLSX.utils.aoa_to_sheet(rows);
 
   worksheet['!cols'] = [
